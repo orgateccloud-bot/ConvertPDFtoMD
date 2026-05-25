@@ -1,0 +1,19 @@
+{
+  "name": "pdf-to-md",
+  "version": "1.0.0",
+  "description": "Conversor PDF -> Markdown com 3 métodos (simples, avançado, OCR) e interface gráfica via navegador.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "cli": "node converters.js"
+  },
+  "dependencies": {
+    "@opendocsg/pdf2md": "^0.2.1",
+    "express": "^4.19.2",
+    "multer": "^2.1.1",
+    "pdf-parse": "^1.1.1",
+    "pdf-to-png-converter": "^3.3.0",
+    "tesseract.js": "^5.1.0"
+  }
+}

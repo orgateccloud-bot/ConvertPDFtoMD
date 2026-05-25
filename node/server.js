@@ -114,7 +114,10 @@ const HTML_PAGE = `<!DOCTYPE html>
             <input type="radio" name="format" value="md" checked> Markdown (.md)
           </label>
           <label class="format">
-            <input type="radio" name="format" value="xml"> XML (.xml, estruturado por página)
+            <input type="radio" name="format" value="xml"> XML (.xml, por página)
+          </label>
+          <label class="format">
+            <input type="radio" name="format" value="ofx"> OFX (.ofx, extrato Sicoob)
           </label>
         </div>
       </div>
@@ -197,8 +200,10 @@ const HTML_PAGE = `<!DOCTYPE html>
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
         outputEl.value = data.content;
-        const ext = data.format === 'xml' ? '.xml' : '.md';
-        currentMime = data.format === 'xml' ? 'application/xml' : 'text/markdown';
+        const extMap = { xml: '.xml', ofx: '.ofx' };
+        const mimeMap = { xml: 'application/xml', ofx: 'application/x-ofx' };
+        const ext = extMap[data.format] || '.md';
+        currentMime = mimeMap[data.format] || 'text/markdown';
         currentFilename = data.filename.replace(/\.pdf$/i, ext);
         resultLabel.textContent = 'Resultado (' + data.format.toUpperCase() + ')';
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

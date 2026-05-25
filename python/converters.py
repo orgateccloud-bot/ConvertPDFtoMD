@@ -107,7 +107,7 @@ METHODS = {
     "ocr": convert_ocr,
 }
 
-FORMATS = ("md", "xml")
+FORMATS = ("md", "xml", "ofx")
 
 
 def convert(
@@ -137,7 +137,13 @@ def convert(
     if not pdf_file.exists():
         raise FileNotFoundError(f"Arquivo não encontrado: {pdf_path}")
 
-    if fmt == "md" and method == "advanced":
+    if fmt == "ofx":
+        # OFX exige extração rica para parsear transações — usa sempre o pymupdf4llm.
+        from ofx_writer import markdown_to_ofx
+
+        md = convert_advanced(str(pdf_file))
+        content = markdown_to_ofx(md)
+    elif fmt == "md" and method == "advanced":
         # Manter o markdown completo do pymupdf4llm (com tabelas e títulos).
         content = convert_advanced(str(pdf_file))
     else:
@@ -156,13 +162,13 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Uso: python converters.py <pdf> [método] [saída] [formato]")
         print("  método:   simple | advanced | ocr")
-        print("  formato:  md (padrão) | xml")
+        print("  formato:  md (padrão) | xml | ofx")
         sys.exit(1)
 
     pdf = sys.argv[1]
     method = sys.argv[2] if len(sys.argv) > 2 else "advanced"
     fmt = sys.argv[4] if len(sys.argv) > 4 else "md"
-    default_ext = ".xml" if fmt == "xml" else ".md"
+    default_ext = {"xml": ".xml", "ofx": ".ofx"}.get(fmt, ".md")
     output = sys.argv[3] if len(sys.argv) > 3 else Path(pdf).with_suffix(default_ext).name
 
     print(f"Convertendo '{pdf}' (método: {method}, formato: {fmt}) ...")

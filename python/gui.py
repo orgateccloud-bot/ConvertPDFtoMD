@@ -18,6 +18,7 @@ METHOD_LABELS = {
 FORMAT_LABELS = {
     "Markdown (.md)": "md",
     "XML (.xml, estruturado por página)": "xml",
+    "OFX (.ofx, extrato Sicoob)": "ofx",
 }
 
 
@@ -124,13 +125,14 @@ class ConverterApp:
         if not self.pdf_path:
             return
         fmt = getattr(self, "_last_fmt", "md")
-        ext = ".xml" if fmt == "xml" else ".md"
+        ext_map = {"xml": ".xml", "ofx": ".ofx"}
+        ext = ext_map.get(fmt, ".md")
         default = Path(self.pdf_path).with_suffix(ext).name
-        types = (
-            [("XML", "*.xml"), ("Texto", "*.txt")]
-            if fmt == "xml"
-            else [("Markdown", "*.md"), ("Texto", "*.txt")]
-        )
+        types_map = {
+            "xml": [("XML", "*.xml"), ("Texto", "*.txt")],
+            "ofx": [("OFX", "*.ofx"), ("Texto", "*.txt")],
+        }
+        types = types_map.get(fmt, [("Markdown", "*.md"), ("Texto", "*.txt")])
         path = filedialog.asksaveasfilename(
             defaultextension=ext, initialfile=default, filetypes=types
         )

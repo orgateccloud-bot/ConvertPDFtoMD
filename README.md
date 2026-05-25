@@ -1,6 +1,6 @@
-# PDF -> Markdown / XML — Conversor
+# PDF -> Markdown / XML / OFX — Conversor
 
-Projeto com duas implementações (Python e Node.js), múltiplos métodos de extração e dois formatos de saída (Markdown ou XML).
+Projeto com duas implementações (Python e Node.js), múltiplos métodos de extração e três formatos de saída: **Markdown**, **XML** (estruturado por página) ou **OFX 2.0** (extrato bancário compatível com softwares de conciliação contábil).
 
 ## Estrutura
 
@@ -29,6 +29,7 @@ ConvertPDftoMD/
 |---------|----------|-----------|
 | `md`    | `.md`    | Markdown com `## Página N` por página (ou markdown contínuo no método `advanced`). |
 | `xml`   | `.xml`   | XML estruturado: `<pdf-document>` com `<page number="N">` e conteúdo em `<![CDATA[...]]>`. |
+| `ofx`   | `.ofx`   | OFX 2.0 — extrato bancário com `<STMTTRN>` por transação (data, valor, D/C, memo). Atualmente parser apenas para **Sicoob**. Usa internamente o método `advanced` (pymupdf4llm). |
 
 Exemplo de XML gerado:
 
@@ -78,6 +79,9 @@ python converters.py "..\input\arquivo.pdf" advanced "..\output\arquivo.md"
 
 # XML
 python converters.py "..\input\arquivo.pdf" advanced "..\output\arquivo.xml" xml
+
+# OFX (extrato Sicoob)
+python converters.py "..\input\extrato.pdf" advanced "..\output\extrato.ofx" ofx
 ```
 
 ---
@@ -111,6 +115,9 @@ node converters.js "..\input\arquivo.pdf" advanced "..\output\arquivo.md"
 
 # XML
 node converters.js "..\input\arquivo.pdf" advanced "..\output\arquivo.xml" xml
+
+# OFX (delega ao Python por baixo)
+node converters.js "..\input\extrato.pdf" advanced "..\output\extrato.ofx" ofx
 ```
 
 ---

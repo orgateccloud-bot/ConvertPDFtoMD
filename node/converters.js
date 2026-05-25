@@ -100,7 +100,7 @@ async function convertPremium(pdfPath, fmt = 'md') {
   if (!fs.existsSync(pyScript)) {
     throw new Error(`Script Python não encontrado: ${pyScript}`);
   }
-  const ext = fmt === 'xml' ? '.xml' : '.md';
+  const ext = { xml: '.xml', ofx: '.ofx' }[fmt] || '.md';
   const tmpOut = path.join(os.tmpdir(), `pdf2md-${crypto.randomBytes(8).toString('hex')}${ext}`);
   const pyExe = process.env.PYTHON || 'python';
 
@@ -133,7 +133,7 @@ const METHODS = {
   premium:  { extract: null,                 markdown: convertPremium }, // delega tudo ao Python
 };
 
-const FORMATS = ['md', 'xml'];
+const FORMATS = ['md', 'xml', 'ofx'];
 
 /**
  * Função principal de conversão.
@@ -152,7 +152,8 @@ async function convert(pdfPath, { method = 'advanced', format = 'md', outputPath
   }
 
   let content;
-  if (method === 'premium') {
+  if (format === 'ofx' || method === 'premium') {
+    // OFX precisa do pymupdf4llm + parser Sicoob — delega ao Python.
     content = await convertPremium(pdfPath, format);
   } else if (format === 'md') {
     content = await METHODS[method].markdown(pdfPath);
@@ -181,10 +182,10 @@ if (require.main === module) {
   if (!pdfArg) {
     console.log('Uso: node converters.js <pdf> [método] [saída] [formato]');
     console.log('  método:   simple | advanced | ocr | premium');
-    console.log('  formato:  md (padrão) | xml');
+    console.log('  formato:  md (padrão) | xml | ofx');
     process.exit(1);
   }
-  const ext = fmtArg === 'xml' ? '.xml' : '.md';
+  const ext = { xml: '.xml', ofx: '.ofx' }[fmtArg] || '.md';
   const output = outArg || path.basename(pdfArg, path.extname(pdfArg)) + ext;
   console.log(`Convertendo '${pdfArg}' (método: ${methodArg}, formato: ${fmtArg}) ...`);
   convert(pdfArg, { method: methodArg, format: fmtArg, outputPath: output })

@@ -20,6 +20,9 @@ output/*
 !output/.gitkeep
 node/uploads/
 
+# Modelos de idioma do Tesseract.js (baixados sob demanda na 1a execução)
+node/*.traineddata
+
 # OS
 .DS_Store
 Thumbs.db

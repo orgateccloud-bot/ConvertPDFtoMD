@@ -1,6 +1,6 @@
-# PDF -> Markdown — Conversor
+# PDF -> Markdown / XML — Conversor
 
-Projeto com duas implementações (Python e Node.js) e três métodos de conversão para você testar e comparar.
+Projeto com duas implementações (Python e Node.js), múltiplos métodos de extração e dois formatos de saída (Markdown ou XML).
 
 ## Estrutura
 
@@ -12,13 +12,40 @@ ConvertPDftoMD/
 └── output/         Saídas geradas
 ```
 
-## Métodos de conversão
+## Métodos de extração
 
-| Método      | Quando usar                              | Velocidade |
-|-------------|------------------------------------------|------------|
-| `simple`    | PDF digital, só texto puro               | Rápido     |
-| `advanced`  | PDF digital, preservar títulos/estrutura | Médio      |
-| `ocr`       | PDF escaneado (imagens)                  | Lento      |
+| Método      | Quando usar                                              | Velocidade |
+|-------------|----------------------------------------------------------|------------|
+| `simple`    | PDF digital, só texto puro                               | Rápido     |
+| `advanced`  | PDF digital, preservar títulos / tabelas                 | Médio      |
+| `ocr`       | PDF escaneado (imagens) — texto via reconhecimento óptico | Lento      |
+| `premium`*  | Layout analysis + OCR híbrido (pymupdf4llm)              | Médio/Alto |
+
+\* Disponível apenas no Node.js (delega ao Python via subprocess).
+
+## Formatos de saída
+
+| Formato | Extensão | Estrutura |
+|---------|----------|-----------|
+| `md`    | `.md`    | Markdown com `## Página N` por página (ou markdown contínuo no método `advanced`). |
+| `xml`   | `.xml`   | XML estruturado: `<pdf-document>` com `<page number="N">` e conteúdo em `<![CDATA[...]]>`. |
+
+Exemplo de XML gerado:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<pdf-document source="arquivo.pdf" method="advanced" pages="98" converted-at="2026-05-25T16:25:31">
+  <pages>
+    <page number="1">
+      <content><![CDATA[
+        # Extrato de conta corrente
+        ...
+      ]]></content>
+    </page>
+    ...
+  </pages>
+</pdf-document>
+```
 
 ---
 
@@ -41,10 +68,16 @@ Para o método **OCR**, instale também:
 python gui.py
 ```
 
+Selecione método **e** formato (Markdown ou XML) na própria janela.
+
 ### Uso via CLI
 
 ```powershell
+# Markdown (padrão)
 python converters.py "..\input\arquivo.pdf" advanced "..\output\arquivo.md"
+
+# XML
+python converters.py "..\input\arquivo.pdf" advanced "..\output\arquivo.xml" xml
 ```
 
 ---
@@ -68,23 +101,30 @@ npm start
 
 Acesse: <http://localhost:3000>
 
+Selecione método e formato (Markdown ou XML) no formulário.
+
 ### Uso via CLI
 
 ```powershell
+# Markdown (padrão)
 node converters.js "..\input\arquivo.pdf" advanced "..\output\arquivo.md"
+
+# XML
+node converters.js "..\input\arquivo.pdf" advanced "..\output\arquivo.xml" xml
 ```
 
 ---
 
 ## Comparando os métodos
 
-Para o mesmo PDF, rode os três métodos e compare:
-
 ```powershell
-# Python
+# Mesmo PDF, todos os métodos, formato Markdown
 python converters.py teste.pdf simple    ..\output\teste-simple.md
 python converters.py teste.pdf advanced  ..\output\teste-advanced.md
 python converters.py teste.pdf ocr       ..\output\teste-ocr.md
+
+# Mesmo método, formato XML
+python converters.py teste.pdf advanced  ..\output\teste-advanced.xml xml
 ```
 
-Ou simplesmente abra a GUI e alterne entre os 3 modos com o mesmo arquivo.
+Ou simplesmente abra a GUI e alterne entre as opções com o mesmo arquivo.

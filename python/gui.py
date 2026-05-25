@@ -1,6 +1,6 @@
 """
-Interface gráfica (Tkinter) para o conversor PDF -> Markdown.
-Permite escolher o método (Simples, Avançado, OCR) e visualizar o resultado.
+Interface gráfica (Tkinter) para o conversor PDF -> Markdown / XML.
+Permite escolher método (Simples / Avançado / OCR) e formato (.md ou .xml).
 """
 import threading
 import tkinter as tk
@@ -15,15 +15,20 @@ METHOD_LABELS = {
     "OCR (PDFs escaneados)": "ocr",
 }
 
+FORMAT_LABELS = {
+    "Markdown (.md)": "md",
+    "XML (.xml, estruturado por página)": "xml",
+}
+
 
 class ConverterApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        root.title("PDF → Markdown — Conversor")
-        root.geometry("900x650")
+        root.title("PDF → Markdown / XML — Conversor")
+        root.geometry("900x720")
 
-        self._build_widgets()
         self.pdf_path: str | None = None
+        self._build_widgets()
 
     def _build_widgets(self) -> None:
         top = ttk.Frame(self.root, padding=10)
@@ -33,13 +38,22 @@ class ConverterApp:
         self.file_label = ttk.Label(top, text="Nenhum arquivo selecionado", foreground="gray")
         self.file_label.pack(side="left", padx=10)
 
-        method_frame = ttk.LabelFrame(self.root, text="Método de conversão", padding=10)
+        method_frame = ttk.LabelFrame(self.root, text="Método de extração", padding=10)
         method_frame.pack(fill="x", padx=10, pady=5)
 
         self.method_var = tk.StringVar(value="Avançado (estrutura preservada)")
         for label in METHOD_LABELS:
             ttk.Radiobutton(
                 method_frame, text=label, variable=self.method_var, value=label
+            ).pack(anchor="w")
+
+        format_frame = ttk.LabelFrame(self.root, text="Formato de saída", padding=10)
+        format_frame.pack(fill="x", padx=10, pady=5)
+
+        self.format_var = tk.StringVar(value="Markdown (.md)")
+        for label in FORMAT_LABELS:
+            ttk.Radiobutton(
+                format_frame, text=label, variable=self.format_var, value=label
             ).pack(anchor="w")
 
         action_frame = ttk.Frame(self.root, padding=10)
@@ -49,7 +63,7 @@ class ConverterApp:
         self.convert_btn.pack(side="left")
 
         self.save_btn = ttk.Button(
-            action_frame, text="Salvar .md", command=self.save_output, state="disabled"
+            action_frame, text="Salvar arquivo", command=self.save_output, state="disabled"
         )
         self.save_btn.pack(side="left", padx=5)
 
@@ -74,25 +88,32 @@ class ConverterApp:
             return
 
         method_key = METHOD_LABELS[self.method_var.get()]
+        fmt_key = FORMAT_LABELS[self.format_var.get()]
         self.convert_btn.config(state="disabled")
         self.save_btn.config(state="disabled")
-        self.status.config(text="Convertendo...", foreground="blue")
+        self.status.config(text=f"Convertendo ({method_key} → {fmt_key})...", foreground="blue")
         self.output.delete("1.0", "end")
 
-        threading.Thread(target=self._convert_worker, args=(method_key,), daemon=True).start()
+        threading.Thread(
+            target=self._convert_worker, args=(method_key, fmt_key), daemon=True
+        ).start()
 
-    def _convert_worker(self, method: str) -> None:
+    def _convert_worker(self, method: str, fmt: str) -> None:
         try:
-            md = convert(self.pdf_path, method=method)
-            self.root.after(0, self._on_done, md)
+            content = convert(self.pdf_path, method=method, fmt=fmt)
+            self.root.after(0, self._on_done, content, fmt)
         except Exception as exc:  # noqa: BLE001 — surface any error to the GUI
             self.root.after(0, self._on_error, exc)
 
-    def _on_done(self, md: str) -> None:
-        self.output.insert("1.0", md)
-        self.status.config(text=f"Concluído ({len(md)} caracteres)", foreground="green")
+    def _on_done(self, content: str, fmt: str) -> None:
+        self.output.insert("1.0", content)
+        self.status.config(
+            text=f"Concluído ({len(content)} caracteres, formato {fmt.upper()})",
+            foreground="green",
+        )
         self.convert_btn.config(state="normal")
         self.save_btn.config(state="normal")
+        self._last_fmt = fmt
 
     def _on_error(self, exc: Exception) -> None:
         self.status.config(text="Erro na conversão", foreground="red")
@@ -102,11 +123,16 @@ class ConverterApp:
     def save_output(self) -> None:
         if not self.pdf_path:
             return
-        default = Path(self.pdf_path).with_suffix(".md").name
+        fmt = getattr(self, "_last_fmt", "md")
+        ext = ".xml" if fmt == "xml" else ".md"
+        default = Path(self.pdf_path).with_suffix(ext).name
+        types = (
+            [("XML", "*.xml"), ("Texto", "*.txt")]
+            if fmt == "xml"
+            else [("Markdown", "*.md"), ("Texto", "*.txt")]
+        )
         path = filedialog.asksaveasfilename(
-            defaultextension=".md",
-            initialfile=default,
-            filetypes=[("Markdown", "*.md"), ("Texto", "*.txt")],
+            defaultextension=ext, initialfile=default, filetypes=types
         )
         if path:
             Path(path).write_text(self.output.get("1.0", "end"), encoding="utf-8")

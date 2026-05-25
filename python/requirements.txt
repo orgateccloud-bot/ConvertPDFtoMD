@@ -1,6 +1,8 @@
 pdfplumber>=0.11.0
-pymupdf4llm>=0.0.17
-PyMuPDF>=1.24.0
+# pymupdf4llm e PyMuPDF DEVEM compartilhar a mesma versao major.minor
+# (o pymupdf4llm chama atributos que so existem na versao casada do PyMuPDF).
+pymupdf4llm>=1.27,<1.28
+PyMuPDF>=1.27,<1.28
 pytesseract>=0.3.10
 pdf2image>=1.17.0
 Pillow>=10.0.0
